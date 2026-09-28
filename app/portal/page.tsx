@@ -10,7 +10,6 @@ export default function PortalCliente() {
   const [vehiculos, setVehiculos] = useState<any[]>([])
   const [cargando, setCargando] = useState(true)
   
-  // SOLUCIÓN VERCEL: Le decimos explícitamente a TypeScript las 3 opciones
   const [vistaActiva, setVistaActiva] = useState<'explorador' | 'asistente' | 'cuenta'>('explorador')
 
   // === ESTADOS DEL EXPLORADOR ===
@@ -28,6 +27,9 @@ export default function PortalCliente() {
 
   // === ESTADOS DE SEGURIDAD ===
   const [protegido, setProtegido] = useState(false)
+  
+  // === NUEVO ESTADO PARA EL BOTÓN DE STRIPE ===
+  const [cargandoPortal, setCargandoPortal] = useState(false)
 
   useEffect(() => {
     validarAccesoYTraerDatos()
@@ -156,7 +158,6 @@ export default function PortalCliente() {
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-900 select-none relative overflow-hidden flex flex-col" onContextMenu={(e) => e.preventDefault()}>
       
-      {/* Marca de Agua */}
       <div className="pointer-events-none fixed inset-0 z-50 flex flex-wrap justify-center items-center opacity-[0.04] select-none" style={{ gap: '50px' }}>
         {Array.from({ length: 50 }).map((_, i) => (
           <div key={i} className="transform -rotate-45 text-xl font-bold whitespace-nowrap text-slate-900">
@@ -175,7 +176,6 @@ export default function PortalCliente() {
               <span className="hidden sm:block text-xs font-bold text-slate-400 uppercase tracking-widest">Portal Técnico</span>
             </div>
             
-            {/* TABS DE NAVEGACIÓN */}
             <div className="hidden md:flex bg-slate-800 p-1 rounded-lg">
               <button 
                 onClick={() => setVistaActiva('explorador')}
@@ -210,9 +210,7 @@ export default function PortalCliente() {
 
         <main className="flex-1 max-w-7xl w-full mx-auto p-6 lg:p-8 relative z-20 h-[calc(100vh-64px)] overflow-hidden">
           
-          {/* ==============================
-              VISTA 1: EXPLORADOR DE FLOTA 
-              ============================== */}
+          {/* VISTA 1: EXPLORADOR DE FLOTA */}
           {vistaActiva === 'explorador' && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full">
               <div className="lg:col-span-4 flex flex-col gap-4 h-full">
@@ -323,13 +321,10 @@ export default function PortalCliente() {
             </div>
           )}
 
-          {/* ==============================
-              VISTA 2: ASISTENTE INTELIGENTE
-              ============================== */}
+          {/* VISTA 2: ASISTENTE INTELIGENTE */}
           {vistaActiva === 'asistente' && (
             <div className="h-full flex flex-col max-w-4xl mx-auto bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden relative">
               
-              {/* PAYWALL: Bloqueo para Plan Básico */}
               {perfil?.plan_suscripcion === 'basico' && (
                 <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm z-30 flex items-center justify-center p-6">
                   <div className="bg-white p-8 rounded-2xl max-w-md w-full text-center shadow-2xl">
@@ -341,10 +336,10 @@ export default function PortalCliente() {
                       El Asistente Inteligente analiza miles de códigos y síntomas en segundos. Mejora tu plan a <strong>Premium Flota</strong> para desbloquearlo.
                     </p>
                     <button 
-                      onClick={() => alert("Próximamente: Integración con pasarela de pagos para Upgrade.")}
+                      onClick={() => alert("Puedes mejorar tu plan en la sección Mi Cuenta.")}
                       className="w-full bg-indigo-600 text-white font-bold py-3 rounded-lg hover:bg-indigo-700 transition-colors shadow-md mb-4"
                     >
-                      Mejorar Plan a Premium ($79/mes)
+                      Mejorar Plan
                     </button>
                     <button 
                       onClick={() => setVistaActiva('explorador')}
@@ -404,9 +399,7 @@ export default function PortalCliente() {
             </div>
           )}
 
-          {/* ==============================
-              VISTA 3: MI CUENTA (Ahora separada y limpia)
-              ============================== */}
+          {/* VISTA 3: MI CUENTA */}
           {vistaActiva === 'cuenta' && (
             <div className="h-full flex flex-col max-w-3xl mx-auto bg-white rounded-xl shadow-sm border border-slate-200 overflow-y-auto">
               
@@ -417,7 +410,6 @@ export default function PortalCliente() {
 
               <div className="p-8 space-y-8">
                 
-                {/* Sección Perfil */}
                 <section>
                   <h3 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Información del Taller</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-5 rounded-lg border border-slate-200">
@@ -432,7 +424,6 @@ export default function PortalCliente() {
                   </div>
                 </section>
 
-                {/* Sección Suscripción */}
                 <section>
                   <h3 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Plan y Facturación</h3>
                   <div className="bg-white border border-indigo-100 rounded-lg overflow-hidden shadow-sm">
@@ -453,18 +444,44 @@ export default function PortalCliente() {
                         </p>
                       </div>
                       <div className="shrink-0 w-full sm:w-auto text-right">
+                        
+                        {/* BOTÓN CONECTADO A STRIPE */}
                         <button 
-                          onClick={() => alert("Aquí conectaremos el Customer Portal de Stripe para descargar facturas o cancelar.")}
-                          className="w-full sm:w-auto bg-white border-2 border-indigo-600 text-indigo-700 hover:bg-indigo-50 px-4 py-2 rounded-md font-bold text-sm transition-colors"
+                          disabled={cargandoPortal}
+                          onClick={async () => {
+                            setCargandoPortal(true);
+                            try {
+                              const res = await fetch('/api/stripe/portal', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ 
+                                  email: perfil?.email,
+                                  returnUrl: window.location.href // Le pasa tu URL actual al backend automáticamente
+                                })
+                              });
+                              
+                              const data = await res.json();
+                              if (data.url) {
+                                window.location.href = data.url; 
+                              } else {
+                                alert('Error: No se pudo generar la sesión del portal.');
+                                setCargandoPortal(false);
+                              }
+                            } catch (err) {
+                              alert('Error de conexión.');
+                              setCargandoPortal(false);
+                            }
+                          }}
+                          className="w-full sm:w-auto bg-white border-2 border-indigo-600 text-indigo-700 hover:bg-indigo-50 px-4 py-2 rounded-md font-bold text-sm transition-colors disabled:opacity-50"
                         >
-                          Gestionar Suscripción
+                          {cargandoPortal ? 'Abriendo portal...' : 'Gestionar Suscripción'}
                         </button>
+                        
                       </div>
                     </div>
                   </div>
                 </section>
 
-                {/* Sección Seguridad */}
                 <section>
                   <h3 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Seguridad</h3>
                   <div className="bg-slate-50 p-5 rounded-lg border border-slate-200 flex justify-between items-center">
