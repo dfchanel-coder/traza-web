@@ -191,6 +191,13 @@ export default function PortalCliente() {
               >
                 ✨ Asistente IA {perfil?.plan_suscripcion === 'basico' && <span className="text-xs ml-1" title="Requiere Plan Premium">🔒</span>}
               </button>
+              {/* NUEVO BOTÓN: MI CUENTA */}
+              <button 
+                onClick={() => setVistaActiva('cuenta')}
+                className={`px-4 py-1.5 text-sm font-semibold rounded-md transition-colors ${vistaActiva === 'cuenta' ? 'bg-slate-600 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+              >
+                Mi Cuenta
+              </button>
             </div>
 
             <div className="flex items-center gap-4">
@@ -351,6 +358,88 @@ export default function PortalCliente() {
                   </div>
                 </div>
               )}
+              {/* ==============================
+              VISTA 3: MI CUENTA
+              ============================== */}
+          {vistaActiva === 'cuenta' && (
+            <div className="h-full flex flex-col max-w-3xl mx-auto bg-white rounded-xl shadow-sm border border-slate-200 overflow-y-auto">
+              
+              <div className="bg-slate-900 p-6 border-b border-slate-800 shrink-0 text-white">
+                <h2 className="font-bold text-2xl">Configuración de Cuenta</h2>
+                <p className="text-slate-400 text-sm mt-1">Gestiona tus credenciales y el estado de tu suscripción.</p>
+              </div>
+
+              <div className="p-8 space-y-8">
+                
+                {/* Sección Perfil */}
+                <section>
+                  <h3 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Información del Taller</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-5 rounded-lg border border-slate-200">
+                    <div>
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Nombre Comercial</p>
+                      <p className="font-medium text-slate-900">{perfil?.nombre_completo || 'No especificado'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Correo Electrónico (Login)</p>
+                      <p className="font-medium text-slate-900">{perfil?.email}</p>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Sección Suscripción */}
+                <section>
+                  <h3 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Plan y Facturación</h3>
+                  <div className="bg-white border border-indigo-100 rounded-lg overflow-hidden shadow-sm">
+                    <div className="p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-indigo-50/30">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`px-2.5 py-0.5 rounded text-xs font-black uppercase tracking-wide ${perfil?.plan_suscripcion === 'premium' ? 'bg-indigo-600 text-white' : 'bg-slate-600 text-white'}`}>
+                            PLAN {perfil?.plan_suscripcion || 'BÁSICO'}
+                          </span>
+                          {/* Esto requeriría traer el campo 'estado' desde tu tabla clientes, por ahora lo simulamos activo si tiene sesión */}
+                          <span className="px-2.5 py-0.5 rounded text-xs font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">
+                            ✓ ACTIVO
+                          </span>
+                        </div>
+                        <p className="text-sm text-slate-600 mt-2">
+                          {perfil?.plan_suscripcion === 'premium' 
+                            ? 'Acceso total a manuales y Asistente IA (Buscador Inteligente).' 
+                            : 'Acceso limitado a manuales en PDF. Mejora tu plan para desbloquear la IA.'}
+                        </p>
+                      </div>
+                      <div className="shrink-0 w-full sm:w-auto text-right">
+                        {/* ESTE ES EL BOTÓN QUE LUEGO ABRE EL PORTAL DE STRIPE */}
+                        <button 
+                          onClick={() => alert("Aquí conectaremos el Customer Portal de Stripe para descargar facturas o cancelar.")}
+                          className="w-full sm:w-auto bg-white border-2 border-indigo-600 text-indigo-700 hover:bg-indigo-50 px-4 py-2 rounded-md font-bold text-sm transition-colors"
+                        >
+                          Gestionar Suscripción
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Sección Seguridad */}
+                <section>
+                  <h3 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">Seguridad</h3>
+                  <div className="bg-slate-50 p-5 rounded-lg border border-slate-200 flex justify-between items-center">
+                    <div>
+                      <p className="font-medium text-slate-900 text-sm">Contraseña de acceso</p>
+                      <p className="text-xs text-slate-500 mt-1">Te enviaremos un enlace seguro a tu correo para modificarla.</p>
+                    </div>
+                    <button 
+                      onClick={() => alert("Aquí dispararemos la función resetPasswordForEmail de Supabase.")}
+                      className="bg-slate-200 hover:bg-slate-300 text-slate-800 px-4 py-2 rounded-md font-semibold text-sm transition-colors"
+                    >
+                      Restablecer
+                    </button>
+                  </div>
+                </section>
+
+              </div>
+            </div>
+          )}
 
               <div className="bg-indigo-600 p-4 border-b border-indigo-700 shrink-0 text-white text-center">
                 <h2 className="font-bold text-lg">Asistente Técnico de TRAZA</h2>

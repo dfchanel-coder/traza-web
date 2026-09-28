@@ -9,19 +9,40 @@ export default function Registro() {
   const router = useRouter()
   
   // Estados del Formulario
-  const [plan, setPlan] = useState('premium') // Seleccionado por defecto
+  const [plan, setPlan] = useState('premium')
   const [nombre, setNombre] = useState('')
+  
   const [email, setEmail] = useState('')
+  const [emailConfirm, setEmailConfirm] = useState('')
+  
   const [password, setPassword] = useState('')
+  const [passwordConfirm, setPasswordConfirm] = useState('')
   
   const [estado, setEstado] = useState({ msj: '', error: false, cargando: false })
 
   const registrarCuenta = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // 1. Validaciones locales estrictas
+    if (email.trim().toLowerCase() !== emailConfirm.trim().toLowerCase()) {
+      setEstado({ msj: 'Los correos electrónicos no coinciden.', error: true, cargando: false })
+      return
+    }
+    
+    if (password !== passwordConfirm) {
+      setEstado({ msj: 'Las contraseñas no coinciden.', error: true, cargando: false })
+      return
+    }
+
+    if (password.length < 6) {
+      setEstado({ msj: 'La contraseña debe tener al menos 6 caracteres.', error: true, cargando: false })
+      return
+    }
+
     setEstado({ msj: 'Creando cuenta y preparando pasarela segura...', error: false, cargando: true })
 
     try {
-      // 1. Creamos la credencial de Auth en Supabase
+      // 2. Creamos la credencial de Auth en Supabase
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
         password,
@@ -37,20 +58,15 @@ export default function Registro() {
       if (authError) throw authError;
 
       // ==========================================
-      // 2. LÓGICA DE PASARELA DE PAGOS (EL PUENTE)
+      // 3. LÓGICA DE PASARELA DE PAGOS 
       // ==========================================
       
-      // REEMPLAZA ESTOS LINKS por los que generes en tu cuenta de Stripe o Mercado Pago
-      const linkPagoBasico = "https://buy.stripe.com/test_5kQdR95oh4S34OagVc6Na01"
-      const linkPagoPremium = "https://buy.stripe.com/test_5kQ8wPaIBfwH3K6cEW6Na02"
+      const linkPagoBasico = "https://checkout.stripe.com/c/pay/tu_link_basico_aqui"
+      const linkPagoPremium = "https://checkout.stripe.com/c/pay/tu_link_premium_aqui"
 
-      // Seleccionamos el link dependiendo del plan que eligió el taller
       const urlDestino = plan === 'premium' ? linkPagoPremium : linkPagoBasico;
-
-      // Agregamos el email a la URL para que el usuario no tenga que volver a escribirlo en la pasarela
       const urlConEmail = `${urlDestino}?prefilled_email=${encodeURIComponent(email.trim().toLowerCase())}`;
 
-      // Redirigimos al usuario a poner su tarjeta (Saldrá de tu web hacia la pasarela)
       window.location.href = urlConEmail;
 
     } catch (err: any) {
@@ -63,7 +79,6 @@ export default function Registro() {
       
       {/* Mitad Izquierda: Selección de Planes */}
       <div className="w-full md:w-5/12 bg-slate-900 text-white p-8 md:p-12 flex flex-col justify-center relative overflow-hidden">
-        {/* Elemento de diseño de fondo */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-slate-800 rounded-full blur-3xl opacity-30 -mr-20 -mt-20"></div>
 
         <Link href="/" className="text-2xl font-black tracking-tighter mb-12 inline-block relative z-10">TRAZA</Link>
@@ -73,7 +88,6 @@ export default function Registro() {
           <p className="text-slate-400 mb-8 text-sm max-w-sm">Accede a manuales exactos, diagramas eléctricos y resoluciones guiadas para vehículos pesados.</p>
 
           <div className="space-y-4">
-            {/* Tarjeta Plan Básico */}
             <div 
               onClick={() => setPlan('basico')}
               className={`cursor-pointer rounded-xl p-5 border-2 transition-all ${plan === 'basico' ? 'border-indigo-500 bg-slate-800' : 'border-slate-800 bg-slate-900 hover:border-slate-700 hover:bg-slate-800/50'}`}
@@ -88,7 +102,6 @@ export default function Registro() {
               </ul>
             </div>
 
-            {/* Tarjeta Plan Premium */}
             <div 
               onClick={() => setPlan('premium')}
               className={`cursor-pointer rounded-xl p-5 border-2 transition-all relative ${plan === 'premium' ? 'border-indigo-500 bg-slate-800 shadow-lg shadow-indigo-900/20' : 'border-slate-800 bg-slate-900 hover:border-slate-700 hover:bg-slate-800/50'}`}
@@ -102,7 +115,7 @@ export default function Registro() {
               </div>
               <ul className="text-sm text-slate-300 space-y-2">
                 <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> Toda la base documental</li>
-                <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> <span className="font-semibold text-white">Diagnósticos y Fallas Comunes</span></li>
+                <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> <span className="font-semibold text-white">Diagnósticos y Fallas</span></li>
                 <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> Buscador Inteligente IA</li>
                 <li className="flex items-center gap-2"><span className="text-emerald-400">✓</span> Hasta 5 Usuarios</li>
               </ul>
@@ -114,7 +127,7 @@ export default function Registro() {
       {/* Mitad Derecha: Formulario de Registro */}
       <div className="w-full md:w-7/12 bg-white p-8 md:p-12 flex items-center justify-center">
         <div className="max-w-md w-full">
-          <div className="mb-10">
+          <div className="mb-8">
             <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Crear cuenta comercial</h1>
             <p className="text-slate-500 mt-2 text-sm">Registra tu taller para comenzar a operar con información técnica precisa.</p>
           </div>
@@ -125,48 +138,67 @@ export default function Registro() {
             </div>
           )}
 
-          <form onSubmit={registrarCuenta} className="space-y-5">
+          <form onSubmit={registrarCuenta} className="space-y-4">
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1">Razón Social o Nombre del Taller</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-1">Nombre del Taller o Responsable</label>
               <input 
                 type="text" required value={nombre} onChange={(e) => setNombre(e.target.value)}
-                className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-colors"
+                className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-colors bg-slate-50"
                 placeholder="Ej. Mecánica Los Hermanos S.A."
               />
             </div>
             
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1">Correo Electrónico Laboral</label>
-              <input 
-                type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-                className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-colors"
-                placeholder="taller@empresa.com"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Correo Electrónico</label>
+                <input 
+                  type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
+                  className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-colors bg-slate-50"
+                  placeholder="taller@empresa.com"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Confirmar Correo</label>
+                <input 
+                  type="email" required value={emailConfirm} onChange={(e) => setEmailConfirm(e.target.value)}
+                  className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-colors bg-slate-50"
+                  placeholder="Repite el correo"
+                />
+              </div>
             </div>
             
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1">Contraseña de Acceso</label>
-              <input 
-                type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
-                minLength={6}
-                className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-colors"
-                placeholder="Mínimo 6 caracteres"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Contraseña</label>
+                <input 
+                  type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
+                  className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-colors bg-slate-50"
+                  placeholder="Mínimo 6 caracteres"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Confirmar Contraseña</label>
+                <input 
+                  type="password" required value={passwordConfirm} onChange={(e) => setPasswordConfirm(e.target.value)}
+                  className="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm focus:outline-none focus:border-slate-400 focus:ring-1 focus:ring-slate-400 transition-colors bg-slate-50"
+                  placeholder="Repite la contraseña"
+                />
+              </div>
             </div>
 
             <button 
               type="submit" disabled={estado.cargando}
-              className="w-full bg-slate-900 text-white font-bold py-3 px-4 rounded-md hover:bg-slate-800 transition-all disabled:opacity-70 text-sm mt-6 shadow-sm"
+              className="w-full bg-slate-900 text-white font-bold py-3.5 px-4 rounded-md hover:bg-slate-800 transition-all disabled:opacity-70 text-sm mt-4 shadow-sm"
             >
               {estado.cargando ? 'Procesando conexión segura...' : 'Crear Cuenta y Finalizar Pago'}
             </button>
             
-            <p className="text-xs text-center text-slate-500 pt-2">
+            <p className="text-xs text-center text-slate-500 pt-1">
               Serás redirigido a nuestra pasarela de pagos segura. Al continuar, aceptas nuestros <a href="#" className="underline hover:text-slate-700">Términos de Servicio</a>.
             </p>
           </form>
 
-          <div className="mt-10 pt-6 border-t border-slate-100 text-center">
+          <div className="mt-8 pt-6 border-t border-slate-100 text-center">
             <p className="text-sm text-slate-600">
               ¿Ya tienes una cuenta registrada?{' '}
               <Link href="/login" className="font-bold text-indigo-600 hover:text-indigo-700 transition-colors">
