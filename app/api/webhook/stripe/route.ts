@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 
 // 1. Inicializamos Stripe con la clave secreta del servidor
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2023-10-16', // Usa la versión por defecto
+  apiVersion: '2026-08-26.dahlia' as any, // Usa la versión por defecto
 })
 
 // 2. Inicializamos Supabase en Modo "Admin/Dios" para saltarnos el RLS
